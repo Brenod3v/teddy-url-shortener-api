@@ -11,14 +11,20 @@ import {
 import type { Response } from 'express';
 import { ShortenService } from '../services/shorten.service';
 import { ShortenControllerInterface } from './shorten.controller.interface';
+import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
+import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
 
 @Controller()
 export class ShortenController implements ShortenControllerInterface {
   constructor(private readonly shortenService: ShortenService) {}
 
   @Post('shorten')
-  shortenUrl(@Body() body: { url: string }) {
-    return this.shortenService.shortenUrl(body.url);
+  shortenUrl(@Body() body: CreateShortUrlRequestDto): Promise<CreateShortUrlResponseDto> {
+    try{
+      return this.shortenService.shortenUrl(body);
+    } catch (error) {
+      throw new Error('Error in controller while creating short URL');
+    }
   }
 
   @Get('my-urls')

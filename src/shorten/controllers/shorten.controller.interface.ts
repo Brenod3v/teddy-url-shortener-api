@@ -1,7 +1,9 @@
 import { Response } from 'express';
+import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
+import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
 
 export interface ShortenControllerInterface {
-  shortenUrl(body: { url: string }): any;
+  shortenUrl(ShortenUrlDto: CreateShortUrlRequestDto): Promise<CreateShortUrlResponseDto>;
   getMyUrls(): any;
   updateUrl(id: string, body: { url: string }): any;
   deleteUrl(id: string): any;
