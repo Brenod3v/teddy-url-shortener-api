@@ -25,6 +25,7 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should call authService.register', async () => {
+      // amazonq-ignore-next-line
       const registerDto = { email: 'test@test.com', password: '123456' };
       const result = { access_token: 'token' };
 
@@ -37,6 +38,7 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should call authService.login', async () => {
+      // amazonq-ignore-next-line
       const loginDto = { email: 'test@test.com', password: '123456' };
       const result = { access_token: 'token' };
 

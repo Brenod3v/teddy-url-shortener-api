@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.2] - 2024-11-10
+## [0.0.2] - 2025-11-10
 
 ### Added
 - GET /my-urls endpoint for authenticated users
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release workflow to work with Git Flow via PR merge
 - CHANGELOG generation logic
 
-## [0.0.1] - 2024-01-XX
+## [0.0.1] - 2025-11-08
 
 ### Added
 - URL shortener API with NestJS

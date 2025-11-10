@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ShortenService } from '../../src/shorten/services/shorten.service';
 import { Url } from '../../src/shorten/entities/url.entity';
 import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
@@ -15,6 +15,7 @@ describe('ShortenService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
+    softDelete: jest.fn(),
   };
 
   const mockConfigService = {
@@ -78,7 +79,6 @@ describe('ShortenService', () => {
         longUrl: mockDto.longUrl,
         shortUrl: `${mockBaseUrl}/${customAlias}`,
         slug: customAlias,
-        customAlias,
         userId: 1,
         clicks: 0,
         createdAt: new Date(),
@@ -91,13 +91,12 @@ describe('ShortenService', () => {
       const result = await service.shortenUrl(dtoWithAlias, user);
 
       expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
-        where: [{ slug: customAlias }, { customAlias }],
+        where: { slug: customAlias },
       });
       expect(mockUrlRepository.create).toHaveBeenCalledWith({
         longUrl: mockDto.longUrl,
         shortUrl: `${mockBaseUrl}/${customAlias}`,
         slug: customAlias,
-        customAlias,
         userId: 1,
       });
       expect(result).toEqual(mockUrl);
@@ -180,6 +179,59 @@ describe('ShortenService', () => {
         order: { createdAt: 'DESC' },
       });
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('deleteUrl', () => {
+    it('should soft delete URL when user owns it', async () => {
+      const urlId = '123';
+      const userId = '1';
+      const mockUrl = {
+        id: urlId,
+        longUrl: 'https://example.com',
+        slug: 'abc123',
+        userId: 1,
+      };
+
+      mockUrlRepository.findOne.mockResolvedValue(mockUrl);
+      mockUrlRepository.softDelete.mockResolvedValue({ affected: 1 });
+
+      const result = await service.deleteUrl(urlId, userId);
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: { id: urlId, userId: 1 },
+      });
+      expect(mockUrlRepository.softDelete).toHaveBeenCalledWith(urlId);
+      expect(result).toEqual({ message: 'URL deletada com sucesso' });
+    });
+
+    it('should throw NotFoundException when URL does not exist', async () => {
+      const urlId = '123';
+      const userId = '1';
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.deleteUrl(urlId, userId)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when URL belongs to different user', async () => {
+      const urlId = '123';
+      const userId = '1';
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.deleteUrl(urlId, userId)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: { id: urlId, userId: 1 },
+      });
+      expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
     });
   });
 });

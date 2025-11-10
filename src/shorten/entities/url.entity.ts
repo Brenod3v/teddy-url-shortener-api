@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -14,17 +15,14 @@ export class Url {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   longUrl: string;
 
-  @Column({ unique: true })
+  @Column({ unique: false })
   shortUrl: string;
 
   @Column({ unique: true })
   slug: string;
-
-  @Column({ nullable: true, unique: true })
-  customAlias: string;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })
@@ -41,4 +39,7 @@ export class Url {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

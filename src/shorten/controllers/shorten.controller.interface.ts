@@ -11,6 +11,9 @@ export interface ShortenControllerInterface {
   ): Promise<CreateShortUrlResponseDto>;
   getMyUrls(req: { user: JwtPayload }): Promise<MyUrlsResponseDto[]>;
   updateUrl(id: string, body: { url: string }): any;
-  deleteUrl(id: string): any;
+  deleteUrl(
+    id: string,
+    req: { user: JwtPayload },
+  ): Promise<{ message: string }>;
   redirect(short: string, res: Response): any;
 }
