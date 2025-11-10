@@ -11,6 +11,7 @@ describe('ShortenController', () => {
     shortenUrl: jest.fn(),
     getMyUrls: jest.fn(),
     deleteUrl: jest.fn(),
+    redirect: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -147,6 +148,23 @@ describe('ShortenController', () => {
 
       expect(mockShortenService.deleteUrl).toHaveBeenCalledWith(urlId, user.id);
       expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('redirect', () => {
+    it('should redirect to long URL', async () => {
+      const slug = 'abc123';
+      const longUrl = 'https://example.com';
+      const mockRes = {
+        redirect: jest.fn(),
+      } as unknown as Response;
+
+      mockShortenService.redirect.mockResolvedValue(longUrl);
+
+      await controller.redirect(slug, mockRes);
+
+      expect(mockShortenService.redirect).toHaveBeenCalledWith(slug);
+      expect(mockRes.redirect).toHaveBeenCalledWith(longUrl);
     });
   });
 });

@@ -16,6 +16,7 @@ describe('ShortenService', () => {
     findOne: jest.fn(),
     find: jest.fn(),
     softDelete: jest.fn(),
+    increment: jest.fn(),
   };
 
   const mockConfigService = {
@@ -232,6 +233,66 @@ describe('ShortenService', () => {
         where: { id: urlId, userId: 1 },
       });
       expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('redirect', () => {
+    it('should redirect and increment clicks when URL exists', async () => {
+      const slug = 'abc123';
+      const mockUrl = {
+        id: '123',
+        longUrl: 'https://example.com',
+        slug,
+        clicks: 5,
+      };
+
+      mockUrlRepository.findOne.mockResolvedValue(mockUrl);
+      mockUrlRepository.increment.mockResolvedValue({ affected: 1 });
+
+      const result = await service.redirect(slug);
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: { slug },
+      });
+      expect(mockUrlRepository.increment).toHaveBeenCalledWith(
+        { id: mockUrl.id },
+        'clicks',
+        1,
+      );
+      expect(result).toBe(mockUrl.longUrl);
+    });
+
+    it('should throw NotFoundException when URL does not exist', async () => {
+      const slug = 'nonexistent';
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect(slug)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for empty slug', async () => {
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect('')).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for invalid characters in slug', async () => {
+      const invalidSlug = 'abc@123';
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect(invalidSlug)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
     });
   });
 });
