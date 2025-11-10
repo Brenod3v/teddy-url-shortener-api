@@ -94,6 +94,7 @@ export class ShortenService implements ShortenServiceInterface {
   async redirect(short: string): Promise<string> {
     const url = await this.urlRepository.findOne({
       where: { slug: short },
+      withDeleted: false,
     });
 
     if (!url) {
@@ -133,13 +134,13 @@ export class ShortenService implements ShortenServiceInterface {
 
     const trimmedAlias = alias.trim();
 
-    if (trimmedAlias.length < 3 || trimmedAlias.length > 50) {
-      throw new BadRequestException('Alias deve ter entre 3 e 50 caracteres');
+    if (trimmedAlias.length < 3 || trimmedAlias.length > 30) {
+      throw new BadRequestException('Alias deve ter entre 3 e 30 caracteres');
     }
 
-    if (!/^[a-zA-Z0-9-_]+$/.test(trimmedAlias)) {
+    if (!/^[a-z0-9_-]+$/i.test(trimmedAlias)) {
       throw new BadRequestException(
-        'Alias deve conter apenas letras, números, hífens e underscores',
+        'Alias deve conter apenas letras minúsculas, números, hífens e underscores',
       );
     }
 
