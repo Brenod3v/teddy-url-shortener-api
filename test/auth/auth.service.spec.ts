@@ -41,7 +41,9 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register user and return token', async () => {
+      // amazonq-ignore-next-line
       const registerDto = { email: 'test@test.com', password: '123456' };
+      // amazonq-ignore-next-line
       const hashedPassword = 'hashedPassword';
       const user = { id: 1, email: 'test@test.com', password: hashedPassword };
       const token = 'jwt-token';
@@ -59,6 +61,7 @@ describe('AuthService', () => {
     });
 
     it('should throw BadRequestException if email is missing', async () => {
+      // amazonq-ignore-next-line
       const registerDto = { email: '', password: '123456' };
 
       await expect(service.register(registerDto)).rejects.toThrow(
@@ -67,6 +70,7 @@ describe('AuthService', () => {
     });
 
     it('should throw BadRequestException if password is missing', async () => {
+      // amazonq-ignore-next-line
       const registerDto = { email: 'test@test.com', password: '' };
 
       await expect(service.register(registerDto)).rejects.toThrow(
@@ -77,10 +81,12 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should login user and return token', async () => {
+      // amazonq-ignore-next-line
       const loginDto = { email: 'test@test.com', password: '123456' };
       const user = {
         id: 1,
         email: 'test@test.com',
+        // amazonq-ignore-next-line
         password: 'hashedPassword',
       };
       const token = 'jwt-token';
@@ -98,6 +104,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
+      // amazonq-ignore-next-line
       const loginDto = { email: 'test@test.com', password: '123456' };
 
       mockUserRepository.findOne.mockResolvedValue(null);
@@ -108,10 +115,12 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
+      // amazonq-ignore-next-line
       const loginDto = { email: 'test@test.com', password: '123456' };
       const user = {
         id: 1,
         email: 'test@test.com',
+        // amazonq-ignore-next-line
         password: 'hashedPassword',
       };
 

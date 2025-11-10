@@ -10,6 +10,7 @@ describe('ShortenController', () => {
   const mockShortenService = {
     shortenUrl: jest.fn(),
     getMyUrls: jest.fn(),
+    deleteUrl: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -131,6 +132,21 @@ describe('ShortenController', () => {
 
       expect(mockShortenService.getMyUrls).toHaveBeenCalledWith(user.id);
       expect(result).toEqual(mockUrls);
+    });
+  });
+
+  describe('deleteUrl', () => {
+    it('should delete URL for authenticated user', async () => {
+      const urlId = '123';
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const mockResponse = { message: 'URL deletada com sucesso' };
+
+      mockShortenService.deleteUrl.mockResolvedValue(mockResponse);
+
+      const result = await controller.deleteUrl(urlId, { user });
+
+      expect(mockShortenService.deleteUrl).toHaveBeenCalledWith(urlId, user.id);
+      expect(result).toEqual(mockResponse);
     });
   });
 });
