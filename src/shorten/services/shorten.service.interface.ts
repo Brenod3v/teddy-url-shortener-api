@@ -11,5 +11,5 @@ export interface ShortenServiceInterface {
   getMyUrls(userId: string): Promise<MyUrlsResponseDto[]>;
   updateUrl(id: string, url: string): string;
   deleteUrl(id: string, userId: string): Promise<{ message: string }>;
-  redirect(short: string): string;
+  redirect(short: string): Promise<string>;
 }

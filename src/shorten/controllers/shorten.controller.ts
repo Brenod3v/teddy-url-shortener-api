@@ -53,8 +53,8 @@ export class ShortenController implements ShortenControllerInterface {
   }
 
   @Get(':short')
-  redirect(@Param('short') short: string, @Res() res: Response) {
-    const url = this.shortenService.redirect(short);
+  async redirect(@Param('short') short: string, @Res() res: Response) {
+    const url = await this.shortenService.redirect(short);
     return res.redirect(url);
   }
 }

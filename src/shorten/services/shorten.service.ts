@@ -28,6 +28,8 @@ export class ShortenService implements ShortenServiceInterface {
   ): Promise<CreateShortUrlResponseDto> {
     const { longUrl, customAlias } = shortenUrlDto;
 
+    this.validateUrl(longUrl);
+
     if (customAlias) {
       if (!user) {
         throw new BadRequestException('Alias customizado requer autenticação');
@@ -74,8 +76,17 @@ export class ShortenService implements ShortenServiceInterface {
     return { message: 'URL deletada com sucesso' };
   }
 
-  redirect(short: string) {
-    return short;
+  async redirect(short: string): Promise<string> {
+    const url = await this.urlRepository.findOne({
+      where: { slug: short },
+    });
+
+    if (!url) {
+      throw new NotFoundException('URL não encontrada');
+    }
+
+    await this.urlRepository.increment({ id: url.id }, 'clicks', 1);
+    return url.longUrl;
   }
 
   private generateSlug(): string {
@@ -85,15 +96,44 @@ export class ShortenService implements ShortenServiceInterface {
     return nanoid();
   }
 
-  private async validateCustomAlias(alias: string): Promise<void> {
-    const reservedRoutes = ['auth', 'docs', 'shorten', 'my-urls', 'api'];
+  private validateUrl(url: string): void {
+    if (!url || url.trim() === '') {
+      throw new BadRequestException('URL é obrigatória');
+    }
 
-    if (reservedRoutes.includes(alias.toLowerCase())) {
+    try {
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        throw new BadRequestException('URL deve usar protocolo HTTP ou HTTPS');
+      }
+    } catch {
+      throw new BadRequestException('URL inválida');
+    }
+  }
+
+  private async validateCustomAlias(alias: string): Promise<void> {
+    if (!alias || alias.trim() === '') {
+      throw new BadRequestException('Alias não pode ser vazio');
+    }
+
+    const trimmedAlias = alias.trim();
+    
+    if (trimmedAlias.length < 3 || trimmedAlias.length > 50) {
+      throw new BadRequestException('Alias deve ter entre 3 e 50 caracteres');
+    }
+
+    if (!/^[a-zA-Z0-9-_]+$/.test(trimmedAlias)) {
+      throw new BadRequestException('Alias deve conter apenas letras, números, hífens e underscores');
+    }
+
+    const reservedRoutes = ['auth', 'docs', 'shorten', 'my-urls', 'api', 'admin', 'www'];
+
+    if (reservedRoutes.includes(trimmedAlias.toLowerCase())) {
       throw new BadRequestException('Alias não pode ser uma rota reservada');
     }
 
     const existing = await this.urlRepository.findOne({
-      where: { slug: alias },
+      where: { slug: trimmedAlias },
     });
 
     if (existing) {
