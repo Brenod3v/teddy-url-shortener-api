@@ -17,11 +17,11 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    if (!registerDto.email || !registerDto.password) {
+    if (!registerDto.email || !registerDto.password || registerDto.email.trim() === '' || registerDto.password.trim() === '') {
       throw new BadRequestException('Email and password are required');
     }
     
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const hashedPassword = await bcrypt.hash(registerDto.password.trim(), 10);
     
     const user = this.userRepository.create({
       email: registerDto.email,
