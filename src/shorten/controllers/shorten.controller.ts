@@ -42,8 +42,13 @@ export class ShortenController implements ShortenControllerInterface {
   }
 
   @Put('my-urls/:id')
-  updateUrl(@Param('id') id: string, @Body() body: { url: string }) {
-    return this.shortenService.updateUrl(id, body.url);
+  @UseGuards(JwtAuthGuard)
+  updateUrl(
+    @Param('id') id: string,
+    @Body() body: { url: string },
+    @Request() req: { user: JwtPayload },
+  ) {
+    return this.shortenService.updateUrl(id, body.url, req.user.id);
   }
 
   @Delete('my-urls/:id')

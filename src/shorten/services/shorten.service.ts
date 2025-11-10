@@ -59,8 +59,23 @@ export class ShortenService implements ShortenServiceInterface {
     });
   }
 
-  updateUrl(id: string, url: string): string {
-    return id + url;
+  async updateUrl(
+    id: string,
+    url: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    this.validateUrl(url);
+
+    const existingUrl = await this.urlRepository.findOne({
+      where: { id, userId: parseInt(userId, 10) },
+    });
+
+    if (!existingUrl) {
+      throw new NotFoundException('URL não encontrada');
+    }
+
+    await this.urlRepository.update(id, { longUrl: url });
+    return { message: 'URL atualizada com sucesso' };
   }
 
   async deleteUrl(id: string, userId: string): Promise<{ message: string }> {

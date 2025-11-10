@@ -9,7 +9,7 @@ export interface ShortenServiceInterface {
     user?: JwtPayload,
   ): Promise<CreateShortUrlResponseDto>;
   getMyUrls(userId: string): Promise<MyUrlsResponseDto[]>;
-  updateUrl(id: string, url: string): string;
+  updateUrl(id: string, url: string, userId: string): Promise<{ message: string }>;
   deleteUrl(id: string, userId: string): Promise<{ message: string }>;
   redirect(short: string): Promise<string>;
 }
