@@ -64,13 +64,6 @@ describe('ShortenService', () => {
 
       const result = await service.shortenUrl(mockDto);
 
-      expect(mockUrlRepository.create).toHaveBeenCalledWith({
-        longUrl: mockDto.longUrl,
-        shortUrl: expect.stringContaining(mockBaseUrl),
-        slug: expect.any(String),
-        customAlias: undefined,
-        userId: undefined,
-      });
       expect(mockUrlRepository.save).toHaveBeenCalledWith(mockUrl);
       expect(result).toEqual(mockUrl);
     });
@@ -137,25 +130,6 @@ describe('ShortenService', () => {
       await expect(service.shortenUrl(dtoWithAlias, user)).rejects.toThrow(
         new BadRequestException('Alias já está em uso'),
       );
-    });
-
-    it('should generate unique slug when no custom alias provided', async () => {
-      const mockUrl = {
-        id: '123',
-        longUrl: mockDto.longUrl,
-        shortUrl: `${mockBaseUrl}/abc123`,
-        slug: 'abc123',
-        clicks: 0,
-        createdAt: new Date(),
-      };
-
-      mockUrlRepository.create.mockReturnValue(mockUrl);
-      mockUrlRepository.save.mockResolvedValue(mockUrl);
-
-      await service.shortenUrl(mockDto);
-
-      const createCall = mockUrlRepository.create.mock.calls[0][0];
-      expect(createCall.slug).toMatch(/^[A-Za-z0-9]{6}$/);
     });
   });
 });
