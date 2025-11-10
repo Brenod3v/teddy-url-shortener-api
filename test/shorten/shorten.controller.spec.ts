@@ -10,6 +10,7 @@ describe('ShortenController', () => {
   const mockShortenService = {
     shortenUrl: jest.fn(),
     getMyUrls: jest.fn(),
+    updateUrl: jest.fn(),
     deleteUrl: jest.fn(),
     redirect: jest.fn(),
   };
@@ -133,6 +134,30 @@ describe('ShortenController', () => {
 
       expect(mockShortenService.getMyUrls).toHaveBeenCalledWith(user.id);
       expect(result).toEqual(mockUrls);
+    });
+  });
+
+  describe('updateUrl', () => {
+    it('should update URL for authenticated user', async () => {
+      const urlId = '123';
+      const newUrl = 'https://updated-example.com';
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const mockResponse = { message: 'URL atualizada com sucesso' };
+
+      mockShortenService.updateUrl.mockResolvedValue(mockResponse);
+
+      const result = await controller.updateUrl(
+        urlId,
+        { url: newUrl },
+        { user },
+      );
+
+      expect(mockShortenService.updateUrl).toHaveBeenCalledWith(
+        urlId,
+        newUrl,
+        user.id,
+      );
+      expect(result).toEqual(mockResponse);
     });
   });
 
