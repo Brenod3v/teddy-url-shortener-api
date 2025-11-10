@@ -13,9 +13,11 @@ import {
 import type { Response } from 'express';
 import { ShortenService } from '../services/shorten.service';
 import { ShortenControllerInterface } from './shorten.controller.interface';
-import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
-import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
+import { CreateShortUrlRequestDto } from '../dtos/create-short-url-request.dto';
+import { CreateShortUrlResponseDto } from '../dtos/short-url-response.dto';
+import { MyUrlsResponseDto } from '../dtos/my-urls-response.dto';
 import { OptionalAuthGuard } from '../../auth/guards/optional-auth.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Controller()
@@ -32,8 +34,11 @@ export class ShortenController implements ShortenControllerInterface {
   }
 
   @Get('my-urls')
-  getMyUrls() {
-    return this.shortenService.getMyUrls();
+  @UseGuards(JwtAuthGuard)
+  getMyUrls(
+    @Request() req: { user: JwtPayload },
+  ): Promise<MyUrlsResponseDto[]> {
+    return this.shortenService.getMyUrls(req.user.id);
   }
 
   @Put('my-urls/:id')
