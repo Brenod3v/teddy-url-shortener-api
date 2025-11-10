@@ -117,16 +117,26 @@ export class ShortenService implements ShortenServiceInterface {
     }
 
     const trimmedAlias = alias.trim();
-    
+
     if (trimmedAlias.length < 3 || trimmedAlias.length > 50) {
       throw new BadRequestException('Alias deve ter entre 3 e 50 caracteres');
     }
 
     if (!/^[a-zA-Z0-9-_]+$/.test(trimmedAlias)) {
-      throw new BadRequestException('Alias deve conter apenas letras, números, hífens e underscores');
+      throw new BadRequestException(
+        'Alias deve conter apenas letras, números, hífens e underscores',
+      );
     }
 
-    const reservedRoutes = ['auth', 'docs', 'shorten', 'my-urls', 'api', 'admin', 'www'];
+    const reservedRoutes = [
+      'auth',
+      'docs',
+      'shorten',
+      'my-urls',
+      'api',
+      'admin',
+      'www',
+    ];
 
     if (reservedRoutes.includes(trimmedAlias.toLowerCase())) {
       throw new BadRequestException('Alias não pode ser uma rota reservada');
