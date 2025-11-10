@@ -1,5 +1,15 @@
 ## [v0.0.2] - 2025-11-10
 
+## [v0.0.4] - 2025-11-10
+
+### Added
+-  implement soft delete for URLs and update related service and controller methods
+
+### Fixed
+-  update docker Node.js version to 20 and add crypto polyfill for compatibility
+-  update environment variable checks and error handling in authentication and database configuration
+
+
 ## [v0.0.3] - 2025-11-10
 
 ### Fixed
