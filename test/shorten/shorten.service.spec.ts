@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { ShortenService } from '../../src/shorten/services/shorten.service';
 import { Url } from '../../src/shorten/entities/url.entity';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/createShortUrlRequest.dto';
+import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
 import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenService', () => {
@@ -14,6 +14,7 @@ describe('ShortenService', () => {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
+    find: jest.fn(),
   };
 
   const mockConfigService = {
@@ -130,6 +131,55 @@ describe('ShortenService', () => {
       await expect(service.shortenUrl(dtoWithAlias, user)).rejects.toThrow(
         new BadRequestException('Alias já está em uso'),
       );
+    });
+  });
+
+  describe('getMyUrls', () => {
+    it('should return user URLs ordered by creation date', async () => {
+      const userId = '1';
+      const mockUrls = [
+        {
+          id: '2',
+          longUrl: 'https://google.com',
+          shortUrl: 'https://short.ly/def456',
+          slug: 'def456',
+          clicks: 10,
+          createdAt: new Date('2023-12-02'),
+          updatedAt: new Date('2023-12-02'),
+        },
+        {
+          id: '1',
+          longUrl: 'https://example.com',
+          shortUrl: 'https://short.ly/abc123',
+          slug: 'abc123',
+          clicks: 5,
+          createdAt: new Date('2023-12-01'),
+          updatedAt: new Date('2023-12-01'),
+        },
+      ];
+
+      mockUrlRepository.find.mockResolvedValue(mockUrls);
+
+      const result = await service.getMyUrls(userId);
+
+      expect(mockUrlRepository.find).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        order: { createdAt: 'DESC' },
+      });
+      expect(result).toEqual(mockUrls);
+    });
+
+    it('should return empty array when user has no URLs', async () => {
+      const userId = '1';
+      mockUrlRepository.find.mockResolvedValue([]);
+
+      const result = await service.getMyUrls(userId);
+
+      expect(mockUrlRepository.find).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        order: { createdAt: 'DESC' },
+      });
+      expect(result).toEqual([]);
     });
   });
 });

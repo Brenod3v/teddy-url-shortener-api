@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShortenController } from '../../src/shorten/controllers/shorten.controller';
 import { ShortenService } from '../../src/shorten/services/shorten.service';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/createShortUrlRequest.dto';
+import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
 import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenController', () => {
@@ -9,6 +9,7 @@ describe('ShortenController', () => {
 
   const mockShortenService = {
     shortenUrl: jest.fn(),
+    getMyUrls: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -96,6 +97,40 @@ describe('ShortenController', () => {
         user,
       );
       expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('getMyUrls', () => {
+    it('should return user URLs', async () => {
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const mockUrls = [
+        {
+          id: '1',
+          longUrl: 'https://example.com',
+          shortUrl: 'https://short.ly/abc123',
+          slug: 'abc123',
+          clicks: 5,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: '2',
+          longUrl: 'https://google.com',
+          shortUrl: 'https://short.ly/def456',
+          slug: 'def456',
+          customAlias: 'google',
+          clicks: 10,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockShortenService.getMyUrls.mockResolvedValue(mockUrls);
+
+      const result = await controller.getMyUrls({ user });
+
+      expect(mockShortenService.getMyUrls).toHaveBeenCalledWith(user.id);
+      expect(result).toEqual(mockUrls);
     });
   });
 });
