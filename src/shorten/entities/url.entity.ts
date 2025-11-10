@@ -23,9 +23,6 @@ export class Url {
   @Column({ unique: true })
   slug: string;
 
-  @Column({ nullable: true, unique: true })
-  customAlias: string;
-
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })
   user: User;

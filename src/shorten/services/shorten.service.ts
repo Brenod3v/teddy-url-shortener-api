@@ -39,7 +39,6 @@ export class ShortenService implements ShortenServiceInterface {
       longUrl,
       shortUrl,
       slug,
-      customAlias,
       userId: user?.id ? parseInt(user.id, 10) : undefined,
     });
 
@@ -86,7 +85,7 @@ export class ShortenService implements ShortenServiceInterface {
     }
 
     const existing = await this.urlRepository.findOne({
-      where: [{ slug: alias }, { customAlias: alias }],
+      where: { slug: alias },
     });
 
     if (existing) {

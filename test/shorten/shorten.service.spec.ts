@@ -78,7 +78,6 @@ describe('ShortenService', () => {
         longUrl: mockDto.longUrl,
         shortUrl: `${mockBaseUrl}/${customAlias}`,
         slug: customAlias,
-        customAlias,
         userId: 1,
         clicks: 0,
         createdAt: new Date(),
@@ -91,13 +90,12 @@ describe('ShortenService', () => {
       const result = await service.shortenUrl(dtoWithAlias, user);
 
       expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
-        where: [{ slug: customAlias }, { customAlias }],
+        where: { slug: customAlias },
       });
       expect(mockUrlRepository.create).toHaveBeenCalledWith({
         longUrl: mockDto.longUrl,
         shortUrl: `${mockBaseUrl}/${customAlias}`,
         slug: customAlias,
-        customAlias,
         userId: 1,
       });
       expect(result).toEqual(mockUrl);
