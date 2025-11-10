@@ -7,11 +7,7 @@ import { Url } from './entities/url.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Url]),
-    ConfigModule,
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Url]), ConfigModule, AuthModule],
   providers: [ShortenService],
   controllers: [ShortenController],
 })

@@ -16,6 +16,7 @@ import { ShortenControllerInterface } from './shorten.controller.interface';
 import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
 import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
 import { OptionalAuthGuard } from '../../auth/guards/optional-auth.guard';
+import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Controller()
 export class ShortenController implements ShortenControllerInterface {
@@ -23,7 +24,10 @@ export class ShortenController implements ShortenControllerInterface {
 
   @Post('shorten')
   @UseGuards(OptionalAuthGuard)
-  shortenUrl(@Body() body: CreateShortUrlRequestDto, @Request() req): Promise<CreateShortUrlResponseDto> {
+  shortenUrl(
+    @Body() body: CreateShortUrlRequestDto,
+    @Request() req: { user?: JwtPayload },
+  ): Promise<CreateShortUrlResponseDto> {
     return this.shortenService.shortenUrl(body, req.user);
   }
 

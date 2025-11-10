@@ -4,8 +4,6 @@ import { AuthService } from '../../src/auth/services/auth.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: AuthService;
-
   const mockAuthService = {
     register: jest.fn(),
     login: jest.fn(),
@@ -23,7 +21,6 @@ describe('AuthController', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    authService = module.get<AuthService>(AuthService);
   });
 
   describe('register', () => {
@@ -34,7 +31,7 @@ describe('AuthController', () => {
       mockAuthService.register.mockResolvedValue(result);
 
       expect(await controller.register(registerDto)).toBe(result);
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(mockAuthService.register).toHaveBeenCalledWith(registerDto);
     });
   });
 
@@ -46,7 +43,7 @@ describe('AuthController', () => {
       mockAuthService.login.mockResolvedValue(result);
 
       expect(await controller.login(loginDto)).toBe(result);
-      expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(mockAuthService.login).toHaveBeenCalledWith(loginDto);
     });
   });
 });

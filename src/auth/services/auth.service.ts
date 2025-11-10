@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,19 +21,24 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    if (!registerDto.email || !registerDto.password || registerDto.email.trim() === '' || registerDto.password.trim() === '') {
+    if (
+      !registerDto.email ||
+      !registerDto.password ||
+      registerDto.email.trim() === '' ||
+      registerDto.password.trim() === ''
+    ) {
       throw new BadRequestException('Email and password are required');
     }
-    
+
     const hashedPassword = await bcrypt.hash(registerDto.password.trim(), 10);
-    
+
     const user = this.userRepository.create({
       email: registerDto.email,
       password: hashedPassword,
     });
-    
+
     const savedUser = await this.userRepository.save(user);
-    
+
     const payload = { sub: savedUser.id, email: savedUser.email };
     return {
       access_token: this.jwtService.sign(payload),

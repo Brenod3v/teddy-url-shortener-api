@@ -7,6 +7,7 @@ import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
 import { Url } from '../entities/url.entity';
 import { customAlphabet } from 'nanoid/non-secure';
 import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
+import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class ShortenService implements ShortenServiceInterface {
@@ -16,9 +17,12 @@ export class ShortenService implements ShortenServiceInterface {
     private configService: ConfigService,
   ) {}
 
-  async shortenUrl(shortenUrlDto: CreateShortUrlRequestDto, user?: any): Promise<CreateShortUrlResponseDto> {
+  async shortenUrl(
+    shortenUrlDto: CreateShortUrlRequestDto,
+    user?: JwtPayload,
+  ): Promise<CreateShortUrlResponseDto> {
     const { longUrl, customAlias } = shortenUrlDto;
-    
+
     if (customAlias) {
       if (!user) {
         throw new BadRequestException('Alias customizado requer autenticação');
@@ -29,13 +33,13 @@ export class ShortenService implements ShortenServiceInterface {
     const slug = customAlias || this.generateSlug();
     const baseUrl = this.configService.get<string>('BASE_URL');
     const shortUrl = `${baseUrl}/${slug}`;
-    
+
     const url = this.urlRepository.create({
       longUrl,
       shortUrl,
       slug,
       customAlias,
-      userId: user?.id,
+      userId: user?.id ? parseInt(user.id, 10) : undefined,
     });
 
     const newUrl = await this.urlRepository.save(url);
@@ -64,30 +68,31 @@ export class ShortenService implements ShortenServiceInterface {
   }
 
   deleteUrl(id: string) {
-    return { message: 'URL deleted successfully' };
+    return { message: id };
   }
 
   redirect(short: string) {
-    return 'https://example.com';
+    return short;
   }
 
   private generateSlug(): string {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const alphabet =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const nanoid = customAlphabet(alphabet, 6);
     return nanoid();
   }
 
   private async validateCustomAlias(alias: string): Promise<void> {
     const reservedRoutes = ['auth', 'docs', 'shorten', 'my-urls', 'api'];
-    
+
     if (reservedRoutes.includes(alias.toLowerCase())) {
       throw new BadRequestException('Alias não pode ser uma rota reservada');
     }
 
     const existing = await this.urlRepository.findOne({
-      where: [{ slug: alias }, { customAlias: alias }]
+      where: [{ slug: alias }, { customAlias: alias }],
     });
-    
+
     if (existing) {
       throw new BadRequestException('Alias já está em uso');
     }

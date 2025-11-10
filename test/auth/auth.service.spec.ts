@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../src/auth/services/auth.service';
@@ -11,8 +10,6 @@ jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: Repository<User>;
-  let jwtService: JwtService;
 
   const mockUserRepository = {
     create: jest.fn(),
@@ -40,8 +37,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    jwtService = module.get<JwtService>(JwtService);
   });
 
   describe('register', () => {
@@ -66,20 +61,28 @@ describe('AuthService', () => {
     it('should throw BadRequestException if email is missing', async () => {
       const registerDto = { email: '', password: '123456' };
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if password is missing', async () => {
       const registerDto = { email: 'test@test.com', password: '' };
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('login', () => {
     it('should login user and return token', async () => {
       const loginDto = { email: 'test@test.com', password: '123456' };
-      const user = { id: 1, email: 'test@test.com', password: 'hashedPassword' };
+      const user = {
+        id: 1,
+        email: 'test@test.com',
+        password: 'hashedPassword',
+      };
       const token = 'jwt-token';
 
       mockUserRepository.findOne.mockResolvedValue(user);
@@ -99,17 +102,25 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
       const loginDto = { email: 'test@test.com', password: '123456' };
-      const user = { id: 1, email: 'test@test.com', password: 'hashedPassword' };
+      const user = {
+        id: 1,
+        email: 'test@test.com',
+        password: 'hashedPassword',
+      };
 
       mockUserRepository.findOne.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });
