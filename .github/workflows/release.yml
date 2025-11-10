@@ -7,6 +7,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,7 +25,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Check if release needed
+        id: check
+        run: |
+          LAST_COMMIT=$(git log -1 --pretty=%B)
+          if echo "$LAST_COMMIT" | grep -q "^chore: release"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping release - last commit was a release commit"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine version bump
+        if: steps.check.outputs.skip == 'false'
         id: version
         run: |
           if git log -1 --pretty=%B | grep -q "BREAKING CHANGE\|!:"; then
@@ -35,12 +49,14 @@ jobs:
           fi
 
       - name: Bump version and create tag
+        if: steps.check.outputs.skip == 'false'
         run: |
           npm version ${{ steps.version.outputs.bump }} --no-git-tag-version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "NEW_VERSION=v$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Update CHANGELOG
+        if: steps.check.outputs.skip == 'false'
         run: |
           echo "## [$NEW_VERSION] - $(date +%Y-%m-%d)" > CHANGELOG_TEMP.md
           echo "" >> CHANGELOG_TEMP.md
@@ -82,8 +98,14 @@ jobs:
           rm CHANGELOG_TEMP.md
 
       - name: Commit and push
+        if: steps.check.outputs.skip == 'false'
         run: |
-          git add package.json CHANGELOG.md
-          git commit -m "chore: release $NEW_VERSION"
-          git tag $NEW_VERSION
-          git push origin main --tags
+          if [ -n "$(git status --porcelain)" ]; then
+            git add package.json CHANGELOG.md
+            git commit -m "chore: release $NEW_VERSION"
+            git tag $NEW_VERSION
+            git push origin main
+            git push origin $NEW_VERSION
+          else
+            echo "No changes to commit"
+          fi
