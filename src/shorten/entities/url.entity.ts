@@ -14,10 +14,10 @@ export class Url {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   longUrl: string;
 
-  @Column({ unique: true })
+  @Column({ unique: false })
   shortUrl: string;
 
   @Column({ unique: true })
