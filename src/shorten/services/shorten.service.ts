@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
@@ -53,17 +57,21 @@ export class ShortenService implements ShortenServiceInterface {
     });
   }
 
-  updateUrl(id: string, url: string) {
-    return {
-      id,
-      originalUrl: url,
-      shortUrl: 'abc123',
-      updatedAt: new Date(),
-    };
+  updateUrl(id: string, url: string): string {
+    return id + url;
   }
 
-  deleteUrl(id: string) {
-    return { message: id };
+  async deleteUrl(id: string, userId: string): Promise<{ message: string }> {
+    const url = await this.urlRepository.findOne({
+      where: { id, userId: parseInt(userId, 10) },
+    });
+
+    if (!url) {
+      throw new NotFoundException('URL não encontrada');
+    }
+
+    await this.urlRepository.softDelete(id);
+    return { message: 'URL deletada com sucesso' };
   }
 
   redirect(short: string) {
