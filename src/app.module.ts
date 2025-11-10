@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { ShortenModule } from './shorten/shorten.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ShortenModule } from './shorten/shorten.module';
       }),
     }),
     ShortenModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [],
