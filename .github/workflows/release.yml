@@ -3,6 +3,9 @@ name: Auto Release
 on:
   push:
     branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 jobs:
   release:
@@ -28,6 +31,13 @@ jobs:
       - name: Check if release needed
         id: check
         run: |
+          # Skip if PR was not merged
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.merged }}" != "true" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping - PR was not merged"
+            exit 0
+          fi
+          
           LAST_COMMIT=$(git log -1 --pretty=%B)
           if echo "$LAST_COMMIT" | grep -q "^chore: release"; then
             echo "skip=true" >> $GITHUB_OUTPUT
@@ -58,44 +68,59 @@ jobs:
       - name: Update CHANGELOG
         if: steps.check.outputs.skip == 'false'
         run: |
-          echo "## [$NEW_VERSION] - $(date +%Y-%m-%d)" > CHANGELOG_TEMP.md
-          echo "" >> CHANGELOG_TEMP.md
-          
-          # Features
-          FEATURES=$(git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD --pretty=format:"%s" | grep "^feat" || true)
-          if [ ! -z "$FEATURES" ]; then
-            echo "### Added" >> CHANGELOG_TEMP.md
-            echo "$FEATURES" | sed 's/^feat[(:]/- /' | sed 's/^feat: /- /' >> CHANGELOG_TEMP.md
-            echo "" >> CHANGELOG_TEMP.md
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMIT_RANGE="HEAD"
+          else
+            COMMIT_RANGE="$LAST_TAG..HEAD"
           fi
           
-          # Fixes
-          FIXES=$(git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD --pretty=format:"%s" | grep "^fix" || true)
-          if [ ! -z "$FIXES" ]; then
-            echo "### Fixed" >> CHANGELOG_TEMP.md
-            echo "$FIXES" | sed 's/^fix[(:]/- /' | sed 's/^fix: /- /' >> CHANGELOG_TEMP.md
-            echo "" >> CHANGELOG_TEMP.md
-          fi
+          # Check if there are any relevant commits
+          COMMITS=$(git log --oneline $COMMIT_RANGE --pretty=format:"%s" | grep -E "^(feat|fix|BREAKING CHANGE|!)" || true)
           
-          # Breaking Changes
-          BREAKING=$(git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD --pretty=format:"%s" | grep "BREAKING CHANGE\|!:" || true)
-          if [ ! -z "$BREAKING" ]; then
-            echo "### BREAKING CHANGES" >> CHANGELOG_TEMP.md
-            echo "$BREAKING" | sed 's/^.*: /- /' >> CHANGELOG_TEMP.md
+          if [ ! -z "$COMMITS" ]; then
+            # Create new changelog entry
+            echo "## [$NEW_VERSION] - $(date +%Y-%m-%d)" > CHANGELOG_TEMP.md
             echo "" >> CHANGELOG_TEMP.md
+            
+            # Features
+            FEATURES=$(echo "$COMMITS" | grep "^feat" || true)
+            if [ ! -z "$FEATURES" ]; then
+              echo "### Added" >> CHANGELOG_TEMP.md
+              echo "$FEATURES" | sed 's/^feat[(:]/- /' | sed 's/^feat: /- /' >> CHANGELOG_TEMP.md
+              echo "" >> CHANGELOG_TEMP.md
+            fi
+            
+            # Fixes
+            FIXES=$(echo "$COMMITS" | grep "^fix" || true)
+            if [ ! -z "$FIXES" ]; then
+              echo "### Fixed" >> CHANGELOG_TEMP.md
+              echo "$FIXES" | sed 's/^fix[(:]/- /' | sed 's/^fix: /- /' >> CHANGELOG_TEMP.md
+              echo "" >> CHANGELOG_TEMP.md
+            fi
+            
+            # Breaking Changes
+            BREAKING=$(echo "$COMMITS" | grep "BREAKING CHANGE\|!:" || true)
+            if [ ! -z "$BREAKING" ]; then
+              echo "### BREAKING CHANGES" >> CHANGELOG_TEMP.md
+              echo "$BREAKING" | sed 's/^.*: /- /' >> CHANGELOG_TEMP.md
+              echo "" >> CHANGELOG_TEMP.md
+            fi
+            
+            # Insert new entry after first line (title) of existing CHANGELOG
+            if [ -f "CHANGELOG.md" ]; then
+              head -n 1 CHANGELOG.md > CHANGELOG_NEW.md
+              echo "" >> CHANGELOG_NEW.md
+              cat CHANGELOG_TEMP.md >> CHANGELOG_NEW.md
+              tail -n +2 CHANGELOG.md >> CHANGELOG_NEW.md
+            else
+              cp CHANGELOG_TEMP.md CHANGELOG_NEW.md
+            fi
+            
+            mv CHANGELOG_NEW.md CHANGELOG.md
+            rm CHANGELOG_TEMP.md
           fi
-          
-          # Other changes
-          OTHER=$(git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD --pretty=format:"%s" | grep -v "^feat\|^fix\|BREAKING CHANGE\|!:" || true)
-          if [ ! -z "$OTHER" ]; then
-            echo "### Changed" >> CHANGELOG_TEMP.md
-            echo "$OTHER" | sed 's/^/- /' >> CHANGELOG_TEMP.md
-            echo "" >> CHANGELOG_TEMP.md
-          fi
-          
-          cat CHANGELOG_TEMP.md CHANGELOG.md > CHANGELOG_NEW.md
-          mv CHANGELOG_NEW.md CHANGELOG.md
-          rm CHANGELOG_TEMP.md
 
       - name: Commit and push
         if: steps.check.outputs.skip == 'false'
