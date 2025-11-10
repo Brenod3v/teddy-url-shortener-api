@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShortenController } from '../../src/shorten/controllers/shorten.controller';
 import { ShortenService } from '../../src/shorten/services/shorten.service';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/createShortUrlRequest.dto';
+import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
 import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenController', () => {

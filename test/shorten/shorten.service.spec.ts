@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { ShortenService } from '../../src/shorten/services/shorten.service';
 import { Url } from '../../src/shorten/entities/url.entity';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/createShortUrlRequest.dto';
+import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
 import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenService', () => {

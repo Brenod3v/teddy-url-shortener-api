@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { ShortenServiceInterface } from './shorten.service.interface';
-import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
+import { CreateShortUrlRequestDto } from '../dtos/create-short-url-request.dto';
 import { Url } from '../entities/url.entity';
 import { customAlphabet } from 'nanoid/non-secure';
-import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
+import { CreateShortUrlResponseDto } from '../dtos/short-url-response.dto';
+import { MyUrlsResponseDto } from '../dtos/my-urls-response.dto';
 import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -46,16 +47,11 @@ export class ShortenService implements ShortenServiceInterface {
     return newUrl;
   }
 
-  getMyUrls() {
-    return [
-      {
-        id: '1',
-        originalUrl: 'https://example.com',
-        shortUrl: 'abc123',
-        clicks: 5,
-        createdAt: new Date(),
-      },
-    ];
+  async getMyUrls(userId: string): Promise<MyUrlsResponseDto[]> {
+    return this.urlRepository.find({
+      where: { userId: parseInt(userId, 10) },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   updateUrl(id: string, url: string) {
