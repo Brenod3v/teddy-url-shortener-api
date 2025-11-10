@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
@@ -16,25 +16,30 @@ export class ShortenService implements ShortenServiceInterface {
     private configService: ConfigService,
   ) {}
 
-  async shortenUrl(shortenUrlDto: CreateShortUrlRequestDto): Promise<CreateShortUrlResponseDto> {
-    try{
-      const slug = this.generateSlug();
-      const baseUrl = this.configService.get<string>('BASE_URL');
-      const shortUrl = `${baseUrl}/${slug}`;
-      
-      const url = this.urlRepository.create({
-        longUrl: shortenUrlDto.longUrl,
-        shortUrl,
-        slug,
-      });
-
-      const newUrl = await this.urlRepository.save(url);
-      return newUrl;
-
-    } catch (error) {
-      console.error('Database error:', error);
-      throw new Error(`Error creating short URL: ${error.message}`);
+  async shortenUrl(shortenUrlDto: CreateShortUrlRequestDto, user?: any): Promise<CreateShortUrlResponseDto> {
+    const { longUrl, customAlias } = shortenUrlDto;
+    
+    if (customAlias) {
+      if (!user) {
+        throw new BadRequestException('Alias customizado requer autenticação');
+      }
+      await this.validateCustomAlias(customAlias);
     }
+
+    const slug = customAlias || this.generateSlug();
+    const baseUrl = this.configService.get<string>('BASE_URL');
+    const shortUrl = `${baseUrl}/${slug}`;
+    
+    const url = this.urlRepository.create({
+      longUrl,
+      shortUrl,
+      slug,
+      customAlias,
+      userId: user?.id,
+    });
+
+    const newUrl = await this.urlRepository.save(url);
+    return newUrl;
   }
 
   getMyUrls() {
@@ -70,5 +75,21 @@ export class ShortenService implements ShortenServiceInterface {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const nanoid = customAlphabet(alphabet, 6);
     return nanoid();
+  }
+
+  private async validateCustomAlias(alias: string): Promise<void> {
+    const reservedRoutes = ['auth', 'docs', 'shorten', 'my-urls', 'api'];
+    
+    if (reservedRoutes.includes(alias.toLowerCase())) {
+      throw new BadRequestException('Alias não pode ser uma rota reservada');
+    }
+
+    const existing = await this.urlRepository.findOne({
+      where: [{ slug: alias }, { customAlias: alias }]
+    });
+    
+    if (existing) {
+      throw new BadRequestException('Alias já está em uso');
+    }
   }
 }

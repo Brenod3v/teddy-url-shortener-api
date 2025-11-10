@@ -7,24 +7,24 @@ import {
   Param,
   Body,
   Res,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ShortenService } from '../services/shorten.service';
 import { ShortenControllerInterface } from './shorten.controller.interface';
 import { CreateShortUrlRequestDto } from '../dtos/createShortUrlRequest.dto';
 import { CreateShortUrlResponseDto } from '../dtos/shortUrlResponse.dto';
+import { OptionalAuthGuard } from '../../auth/guards/optional-auth.guard';
 
 @Controller()
 export class ShortenController implements ShortenControllerInterface {
   constructor(private readonly shortenService: ShortenService) {}
 
   @Post('shorten')
-  shortenUrl(@Body() body: CreateShortUrlRequestDto): Promise<CreateShortUrlResponseDto> {
-    try{
-      return this.shortenService.shortenUrl(body);
-    } catch (error) {
-      throw new Error('Error in controller while creating short URL');
-    }
+  @UseGuards(OptionalAuthGuard)
+  shortenUrl(@Body() body: CreateShortUrlRequestDto, @Request() req): Promise<CreateShortUrlResponseDto> {
+    return this.shortenService.shortenUrl(body, req.user);
   }
 
   @Get('my-urls')
