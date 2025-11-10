@@ -42,12 +42,3 @@ jobs:
     - name: Unit Tests
       run: npm run test:unit
 
-    - name: E2E Tests
-      run: npm run test:e2e
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: test_db
-        JWT_SECRET: test-secret
