@@ -1,5 +1,11 @@
 ## [v0.0.2] - 2025-11-10
 
+## [v0.0.3] - 2025-11-10
+
+### Fixed
+-  ajusta workflow para funcionar com Git Flow via PR merge
+
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
