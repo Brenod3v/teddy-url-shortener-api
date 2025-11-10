@@ -1,0 +1,135 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { BadRequestException } from '@nestjs/common';
+import { ShortenService } from '../../src/shorten/services/shorten.service';
+import { Url } from '../../src/shorten/entities/url.entity';
+import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/createShortUrlRequest.dto';
+import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
+
+describe('ShortenService', () => {
+  let service: ShortenService;
+
+  const mockUrlRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ShortenService,
+        {
+          provide: getRepositoryToken(Url),
+          useValue: mockUrlRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<ShortenService>(ShortenService);
+    jest.clearAllMocks();
+  });
+
+  describe('shortenUrl', () => {
+    const mockBaseUrl = 'https://short.ly';
+    const mockDto: CreateShortUrlRequestDto = {
+      longUrl: 'https://example.com',
+    };
+
+    beforeEach(() => {
+      mockConfigService.get.mockReturnValue(mockBaseUrl);
+    });
+
+    it('should create short URL without custom alias', async () => {
+      const mockUrl = {
+        id: '123',
+        longUrl: mockDto.longUrl,
+        shortUrl: `${mockBaseUrl}/abc123`,
+        slug: 'abc123',
+        clicks: 0,
+        createdAt: new Date(),
+      };
+
+      mockUrlRepository.create.mockReturnValue(mockUrl);
+      mockUrlRepository.save.mockResolvedValue(mockUrl);
+
+      const result = await service.shortenUrl(mockDto);
+
+      expect(mockUrlRepository.save).toHaveBeenCalledWith(mockUrl);
+      expect(result).toEqual(mockUrl);
+    });
+
+    it('should create short URL with custom alias for authenticated user', async () => {
+      const customAlias = 'myalias';
+      const dtoWithAlias = { ...mockDto, customAlias };
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const mockUrl = {
+        id: '123',
+        longUrl: mockDto.longUrl,
+        shortUrl: `${mockBaseUrl}/${customAlias}`,
+        slug: customAlias,
+        customAlias,
+        userId: 1,
+        clicks: 0,
+        createdAt: new Date(),
+      };
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+      mockUrlRepository.create.mockReturnValue(mockUrl);
+      mockUrlRepository.save.mockResolvedValue(mockUrl);
+
+      const result = await service.shortenUrl(dtoWithAlias, user);
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: [{ slug: customAlias }, { customAlias }],
+      });
+      expect(mockUrlRepository.create).toHaveBeenCalledWith({
+        longUrl: mockDto.longUrl,
+        shortUrl: `${mockBaseUrl}/${customAlias}`,
+        slug: customAlias,
+        customAlias,
+        userId: 1,
+      });
+      expect(result).toEqual(mockUrl);
+    });
+
+    it('should throw BadRequestException when custom alias is used without authentication', async () => {
+      const dtoWithAlias = { ...mockDto, customAlias: 'myalias' };
+
+      await expect(service.shortenUrl(dtoWithAlias)).rejects.toThrow(
+        new BadRequestException('Alias customizado requer autenticação'),
+      );
+    });
+
+    it('should throw BadRequestException when custom alias is reserved route', async () => {
+      const dtoWithAlias = { ...mockDto, customAlias: 'auth' };
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+
+      await expect(service.shortenUrl(dtoWithAlias, user)).rejects.toThrow(
+        new BadRequestException('Alias não pode ser uma rota reservada'),
+      );
+    });
+
+    it('should throw BadRequestException when custom alias already exists', async () => {
+      const customAlias = 'existing';
+      const dtoWithAlias = { ...mockDto, customAlias };
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const existingUrl = { id: '456', slug: customAlias };
+
+      mockUrlRepository.findOne.mockResolvedValue(existingUrl);
+
+      await expect(service.shortenUrl(dtoWithAlias, user)).rejects.toThrow(
+        new BadRequestException('Alias já está em uso'),
+      );
+    });
+  });
+});
