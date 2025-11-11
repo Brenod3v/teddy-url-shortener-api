@@ -1,0 +1,455 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_healthcheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/shorten": {
+      "post": {
+        "description": "Cria uma URL encurtada. A autenticação é opcional - se autenticado, a URL será associada ao usuário.",
+        "operationId": "ShortenController_shortenUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShortUrlRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URL encurtada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateShortUrlResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Encurtar URL",
+        "tags": [
+          "urls"
+        ]
+      }
+    },
+    "/my-urls": {
+      "get": {
+        "operationId": "ShortenController_getMyUrls",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de URLs do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyUrlsResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar minhas URLs",
+        "tags": [
+          "urls"
+        ]
+      }
+    },
+    "/my-urls/{id}": {
+      "put": {
+        "operationId": "ShortenController_updateUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID da URL",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Novo URL longo",
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL atualizada com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "URL não encontrada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Atualizar URL",
+        "tags": [
+          "urls"
+        ]
+      },
+      "delete": {
+        "operationId": "ShortenController_deleteUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID da URL",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "URL deletada com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "URL não encontrada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deletar URL",
+        "tags": [
+          "urls"
+        ]
+      }
+    },
+    "/{short}": {
+      "get": {
+        "operationId": "ShortenController_redirect",
+        "parameters": [
+          {
+            "name": "short",
+            "required": true,
+            "in": "path",
+            "description": "Código curto da URL",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirecionamento para URL original"
+          },
+          "404": {
+            "description": "URL não encontrada"
+          }
+        },
+        "summary": "Redirecionar para URL original",
+        "tags": [
+          "urls"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email já está em uso"
+          }
+        },
+        "summary": "Registrar novo usuário",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        },
+        "summary": "Fazer login",
+        "tags": [
+          "auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Teddy URL Shortener API",
+    "description": "API encurtadora de URLs com autenticação JWT",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CreateShortUrlRequestDto": {
+        "type": "object",
+        "properties": {
+          "longUrl": {
+            "type": "string",
+            "example": "https://www.example.com/very/long/url"
+          },
+          "customAlias": {
+            "type": "string",
+            "example": "my-custom-link",
+            "minLength": 3,
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "longUrl"
+        ]
+      },
+      "CreateShortUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "longUrl": {
+            "type": "string",
+            "example": "https://www.example.com/very/long/url"
+          },
+          "shortUrl": {
+            "type": "string",
+            "example": "http://localhost:3000/abc123"
+          },
+          "slug": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "customAlias": {
+            "type": "string",
+            "example": "my-custom-link"
+          },
+          "clicks": {
+            "type": "number",
+            "example": 0
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "userId": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "id",
+          "longUrl",
+          "shortUrl",
+          "slug",
+          "clicks",
+          "createdAt"
+        ]
+      },
+      "MyUrlsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "longUrl": {
+            "type": "string",
+            "example": "https://www.example.com/very/long/url"
+          },
+          "shortUrl": {
+            "type": "string",
+            "example": "http://localhost:3000/abc123"
+          },
+          "slug": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "customAlias": {
+            "type": "string",
+            "example": "my-custom-link"
+          },
+          "clicks": {
+            "type": "number",
+            "example": 42
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-02T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "longUrl",
+          "shortUrl",
+          "slug",
+          "clicks",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123",
+            "minLength": 8,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      }
+    }
+  }
+}
