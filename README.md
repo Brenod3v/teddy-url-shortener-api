@@ -43,6 +43,8 @@ npm install
 
 Renomeie `.env.example` pra `.env` ou adicione um arquivo `.env` a raíz do projeto com suas configurações ou copie:
 
+(Não use em produção)
+
 ```env
 PORT=3000
 
