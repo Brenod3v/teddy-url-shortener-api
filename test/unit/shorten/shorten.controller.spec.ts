@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShortenController } from '../../src/shorten/controllers/shorten.controller';
-import { ShortenService } from '../../src/shorten/services/shorten.service';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
-import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
+import { ShortenController } from '../../../src/shorten/controllers/shorten.controller';
+import { ShortenService } from '../../../src/shorten/services/shorten.service';
+import { CreateShortUrlRequestDto } from '../../../src/shorten/dtos/create-short-url-request.dto';
+import { JwtPayload } from '../../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenController', () => {
   let controller: ShortenController;
@@ -189,7 +189,7 @@ describe('ShortenController', () => {
       await controller.redirect(slug, mockRes);
 
       expect(mockShortenService.redirect).toHaveBeenCalledWith(slug);
-      expect(mockRes.redirect).toHaveBeenCalledWith(longUrl);
+      expect(mockRes.redirect).toHaveBeenCalledWith(302, longUrl);
     });
   });
 });
