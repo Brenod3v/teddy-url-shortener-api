@@ -1,5 +1,14 @@
 ## [v0.0.2] - 2025-11-10
 
+## [v1.0.0] - 2025-11-11
+
+### Added
+feat!: implement auto documentation of major features
+
+### BREAKING CHANGES
+- implement auto documentation of major features
+
+
 ## [v0.1.0] - 2025-11-11
 
 ### Added
