@@ -1,0 +1,387 @@
+{
+	"info": {
+		"_postman_id": "66bb175d-d7c2-426b-9675-1f67ba4881ee",
+		"name": "Teddy URL Shortener API Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49004472",
+		"_collection_link": "https://brenod3v-889424.postman.co/workspace/Breno-Ferreira's-Workspace~5baa4072-5f4a-402a-8ccc-f8a21a1d9e96/collection/49004472-66bb175d-d7c2-426b-9675-1f67ba4881ee?action=share&source=collection_link&creator=49004472"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('token', response.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('token', response.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "URL Shortener",
+			"item": [
+				{
+					"name": "Shorten URL (No Auth)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.google.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shorten URL (With Auth)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.github.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shorten URL (Custom Alias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.stackoverflow.com\",\n  \"customAlias\": \"meu-link\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shorten URL (Custom Alias - No Auth) - Should Fail",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.example.com\",\n  \"customAlias\": \"test-alias\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shorten URL (Reserved Route) - Should Fail",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.example.com\",\n  \"customAlias\": \"auth\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shorten URL (Invalid Alias) - Should Fail",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.example.com\",\n  \"customAlias\": \"ab\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shorten",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shorten"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect URL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/meu-link",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"meu-link"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My URLs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/my-urls",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"my-urls"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete URL by Id",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"longUrl\": \"https://www.github.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/my-urls/02c30758-7103-4355-ba14-8cb04dd93a86",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"my-urls",
+								"02c30758-7103-4355-ba14-8cb04dd93a86"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update original URL",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://www.canvas.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/my-urls/b83dc0ab-5827-4b52-975a-e36220001220",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"my-urls",
+								"b83dc0ab-5827-4b52-975a-e36220001220"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "token",
+			"value": ""
+		}
+	]
+}
