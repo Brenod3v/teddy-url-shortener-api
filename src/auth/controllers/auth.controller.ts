@@ -9,11 +9,13 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
 import { AuthResponseDto } from '../dtos/auth-response.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 export class AuthController {
@@ -22,6 +24,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  @ApiResponse({
+    status: 201,
+    description: 'Usuário criado com sucesso',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({ status: 409, description: 'Email já está em uso' })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     this.logger.log({
       endpoint: 'POST /auth/register',
@@ -49,6 +58,13 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Fazer login' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login realizado com sucesso',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     this.logger.log({ endpoint: 'POST /auth/login', email: loginDto.email });
     try {
