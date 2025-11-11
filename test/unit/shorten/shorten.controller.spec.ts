@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShortenController } from '../../src/shorten/controllers/shorten.controller';
-import { ShortenService } from '../../src/shorten/services/shorten.service';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
-import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
+import { ShortenController } from '../../../src/shorten/controllers/shorten.controller';
+import { ShortenService } from '../../../src/shorten/services/shorten.service';
+import { CreateShortUrlRequestDto } from '../../../src/shorten/dtos/create-short-url-request.dto';
+import { JwtPayload } from '../../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenController', () => {
   let controller: ShortenController;
@@ -10,7 +10,9 @@ describe('ShortenController', () => {
   const mockShortenService = {
     shortenUrl: jest.fn(),
     getMyUrls: jest.fn(),
+    updateUrl: jest.fn(),
     deleteUrl: jest.fn(),
+    redirect: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -135,6 +137,30 @@ describe('ShortenController', () => {
     });
   });
 
+  describe('updateUrl', () => {
+    it('should update URL for authenticated user', async () => {
+      const urlId = '123';
+      const newUrl = 'https://updated-example.com';
+      const user: JwtPayload = { id: '1', email: 'test@test.com' };
+      const mockResponse = { message: 'URL atualizada com sucesso' };
+
+      mockShortenService.updateUrl.mockResolvedValue(mockResponse);
+
+      const result = await controller.updateUrl(
+        urlId,
+        { url: newUrl },
+        { user },
+      );
+
+      expect(mockShortenService.updateUrl).toHaveBeenCalledWith(
+        urlId,
+        newUrl,
+        user.id,
+      );
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
   describe('deleteUrl', () => {
     it('should delete URL for authenticated user', async () => {
       const urlId = '123';
@@ -147,6 +173,23 @@ describe('ShortenController', () => {
 
       expect(mockShortenService.deleteUrl).toHaveBeenCalledWith(urlId, user.id);
       expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('redirect', () => {
+    it('should redirect to long URL', async () => {
+      const slug = 'abc123';
+      const longUrl = 'https://example.com';
+      const mockRes = {
+        redirect: jest.fn(),
+      } as unknown as Response;
+
+      mockShortenService.redirect.mockResolvedValue(longUrl);
+
+      await controller.redirect(slug, mockRes);
+
+      expect(mockShortenService.redirect).toHaveBeenCalledWith(slug);
+      expect(mockRes.redirect).toHaveBeenCalledWith(302, longUrl);
     });
   });
 });
