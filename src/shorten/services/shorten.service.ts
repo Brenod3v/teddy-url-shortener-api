@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,8 @@ import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class ShortenService implements ShortenServiceInterface {
+  private readonly logger = new Logger(ShortenService.name);
+
   constructor(
     @InjectRepository(Url)
     private urlRepository: Repository<Url>,
@@ -27,29 +30,59 @@ export class ShortenService implements ShortenServiceInterface {
     user?: JwtPayload,
   ): Promise<CreateShortUrlResponseDto> {
     const { longUrl, customAlias } = shortenUrlDto;
-
-    this.validateUrl(longUrl);
-
-    if (customAlias) {
-      if (!user) {
-        throw new BadRequestException('Alias customizado requer autenticação');
-      }
-      await this.validateCustomAlias(customAlias);
-    }
-
-    const slug = customAlias || this.generateSlug();
-    const baseUrl = this.configService.get<string>('BASE_URL');
-    const shortUrl = `${baseUrl}/${slug}`;
-
-    const url = this.urlRepository.create({
+    this.logger.log({
+      action: 'shorten_attempt',
       longUrl,
-      shortUrl,
-      slug,
-      userId: user?.id ? parseInt(user.id, 10) : undefined,
+      customAlias,
+      userId: user?.id,
     });
 
-    const newUrl = await this.urlRepository.save(url);
-    return newUrl;
+    try {
+      this.validateUrl(longUrl);
+
+      if (customAlias) {
+        if (!user) {
+          this.logger.warn({
+            action: 'shorten_failed',
+            reason: 'custom_alias_requires_auth',
+          });
+          throw new BadRequestException(
+            'Alias customizado requer autenticação',
+          );
+        }
+        await this.validateCustomAlias(customAlias);
+      }
+
+      const slug = customAlias || this.generateSlug();
+      const baseUrl = this.configService.get<string>('BASE_URL');
+      const shortUrl = `${baseUrl}/${slug}`;
+
+      const url = this.urlRepository.create({
+        longUrl,
+        shortUrl,
+        slug,
+        userId: user?.id ? parseInt(user.id, 10) : undefined,
+      });
+
+      const newUrl = await this.urlRepository.save(url);
+      this.logger.log({
+        action: 'shorten_success',
+        slug,
+        shortUrl,
+        userId: user?.id,
+      });
+      return newUrl;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error({
+        action: 'shorten_error',
+        longUrl,
+        customAlias,
+        userId: user?.id,
+        error: message,
+      });
+      throw error;
+    }
   }
 
   async getMyUrls(userId: string): Promise<MyUrlsResponseDto[]> {
@@ -64,45 +97,104 @@ export class ShortenService implements ShortenServiceInterface {
     url: string,
     userId: string,
   ): Promise<{ message: string }> {
-    this.validateUrl(url);
+    try {
+      this.validateUrl(url);
 
-    const existingUrl = await this.urlRepository.findOne({
-      where: { id, userId: parseInt(userId, 10) },
-    });
+      const existingUrl = await this.urlRepository.findOne({
+        where: { id, userId: parseInt(userId, 10) },
+      });
 
-    if (!existingUrl) {
-      throw new NotFoundException('URL não encontrada');
+      if (!existingUrl) {
+        throw new NotFoundException('URL não encontrada');
+      }
+
+      await this.urlRepository.update(id, { longUrl: url });
+      return { message: 'URL atualizada com sucesso' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error({
+        action: 'update_error',
+        urlId: id,
+        userId,
+        error: message,
+      });
+      throw error;
     }
-
-    await this.urlRepository.update(id, { longUrl: url });
-    return { message: 'URL atualizada com sucesso' };
   }
 
   async deleteUrl(id: string, userId: string): Promise<{ message: string }> {
-    const url = await this.urlRepository.findOne({
-      where: { id, userId: parseInt(userId, 10) },
-    });
+    this.logger.log({ action: 'delete_attempt', urlId: id, userId });
 
-    if (!url) {
-      throw new NotFoundException('URL não encontrada');
+    try {
+      const url = await this.urlRepository.findOne({
+        where: { id, userId: parseInt(userId, 10) },
+      });
+
+      if (!url) {
+        this.logger.warn({
+          action: 'delete_failed',
+          urlId: id,
+          userId,
+          reason: 'not_found',
+        });
+        throw new NotFoundException('URL não encontrada');
+      }
+
+      await this.urlRepository.softDelete(id);
+      this.logger.log({
+        action: 'delete_success',
+        urlId: id,
+        slug: url.slug,
+        userId,
+      });
+      return { message: 'URL deletada com sucesso' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error({
+        action: 'delete_error',
+        urlId: id,
+        userId,
+        error: message,
+      });
+      throw error;
     }
-
-    await this.urlRepository.softDelete(id);
-    return { message: 'URL deletada com sucesso' };
   }
 
   async redirect(short: string): Promise<string> {
-    const url = await this.urlRepository.findOne({
-      where: { slug: short },
-      withDeleted: false,
-    });
+    this.logger.log({ action: 'redirect_attempt', slug: short });
 
-    if (!url) {
-      throw new NotFoundException('URL não encontrada');
+    try {
+      const url = await this.urlRepository.findOne({
+        where: { slug: short },
+        withDeleted: false,
+      });
+
+      if (!url) {
+        this.logger.warn({
+          action: 'redirect_failed',
+          slug: short,
+          reason: 'not_found',
+        });
+        throw new NotFoundException('URL não encontrada');
+      }
+
+      await this.urlRepository.increment({ id: url.id }, 'clicks', 1);
+      this.logger.log({
+        action: 'redirect_success',
+        slug: short,
+        longUrl: url.longUrl,
+        clicks: url.clicks + 1,
+      });
+      return url.longUrl;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error({
+        action: 'redirect_error',
+        slug: short,
+        error: message,
+      });
+      throw error;
     }
-
-    await this.urlRepository.increment({ id: url.id }, 'clicks', 1);
-    return url.longUrl;
   }
 
   private generateSlug(): string {
