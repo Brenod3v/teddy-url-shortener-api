@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ShortenService } from '../../src/shorten/services/shorten.service';
-import { Url } from '../../src/shorten/entities/url.entity';
-import { CreateShortUrlRequestDto } from '../../src/shorten/dtos/create-short-url-request.dto';
-import { JwtPayload } from '../../src/auth/interfaces/jwt-payload.interface';
+import { ShortenService } from '../../../src/shorten/services/shorten.service';
+import { Url } from '../../../src/shorten/entities/url.entity';
+import { CreateShortUrlRequestDto } from '../../../src/shorten/dtos/create-short-url-request.dto';
+import { JwtPayload } from '../../../src/auth/interfaces/jwt-payload.interface';
 
 describe('ShortenService', () => {
   let service: ShortenService;
@@ -15,7 +15,9 @@ describe('ShortenService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
+    update: jest.fn(),
     softDelete: jest.fn(),
+    increment: jest.fn(),
   };
 
   const mockConfigService = {
@@ -182,6 +184,60 @@ describe('ShortenService', () => {
     });
   });
 
+  describe('updateUrl', () => {
+    it('should update URL when user owns it', async () => {
+      const urlId = '123';
+      const userId = '1';
+      const newUrl = 'https://updated-example.com';
+      const mockUrl = {
+        id: urlId,
+        longUrl: 'https://example.com',
+        slug: 'abc123',
+        userId: 1,
+      };
+
+      mockUrlRepository.findOne.mockResolvedValue(mockUrl);
+      mockUrlRepository.update.mockResolvedValue({ affected: 1 });
+
+      const result = await service.updateUrl(urlId, newUrl, userId);
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: { id: urlId, userId: 1 },
+      });
+      expect(mockUrlRepository.update).toHaveBeenCalledWith(urlId, {
+        longUrl: newUrl,
+      });
+      expect(result).toEqual({ message: 'URL atualizada com sucesso' });
+    });
+
+    it('should throw NotFoundException when URL does not exist', async () => {
+      const urlId = '123';
+      const userId = '1';
+      const newUrl = 'https://updated-example.com';
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.updateUrl(urlId, newUrl, userId)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for invalid URL', async () => {
+      const urlId = '123';
+      const userId = '1';
+      const invalidUrl = 'invalid-url';
+
+      await expect(
+        service.updateUrl(urlId, invalidUrl, userId),
+      ).rejects.toThrow(new BadRequestException('URL inválida'));
+
+      expect(mockUrlRepository.findOne).not.toHaveBeenCalled();
+      expect(mockUrlRepository.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('deleteUrl', () => {
     it('should soft delete URL when user owns it', async () => {
       const urlId = '123';
@@ -220,7 +276,7 @@ describe('ShortenService', () => {
 
     it('should throw NotFoundException when URL belongs to different user', async () => {
       const urlId = '123';
-      const userId = '1';
+      const userId = '2';
 
       mockUrlRepository.findOne.mockResolvedValue(null);
 
@@ -229,9 +285,70 @@ describe('ShortenService', () => {
       );
 
       expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
-        where: { id: urlId, userId: 1 },
+        where: { id: urlId, userId: 2 },
       });
       expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('redirect', () => {
+    it('should redirect and increment clicks when URL exists', async () => {
+      const slug = 'abc123';
+      const mockUrl = {
+        id: '123',
+        longUrl: 'https://example.com',
+        slug,
+        clicks: 5,
+      };
+
+      mockUrlRepository.findOne.mockResolvedValue(mockUrl);
+      mockUrlRepository.increment.mockResolvedValue({ affected: 1 });
+
+      const result = await service.redirect(slug);
+
+      expect(mockUrlRepository.findOne).toHaveBeenCalledWith({
+        where: { slug },
+        withDeleted: false,
+      });
+      expect(mockUrlRepository.increment).toHaveBeenCalledWith(
+        { id: mockUrl.id },
+        'clicks',
+        1,
+      );
+      expect(result).toBe(mockUrl.longUrl);
+    });
+
+    it('should throw NotFoundException when URL does not exist', async () => {
+      const slug = 'nonexistent';
+
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect(slug)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for empty slug', async () => {
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect('')).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for invalid characters in slug', async () => {
+      const invalidSlug = 'abc@123';
+      mockUrlRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.redirect(invalidSlug)).rejects.toThrow(
+        new NotFoundException('URL não encontrada'),
+      );
+
+      expect(mockUrlRepository.increment).not.toHaveBeenCalled();
     });
   });
 });
