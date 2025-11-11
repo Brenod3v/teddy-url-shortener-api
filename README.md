@@ -13,6 +13,7 @@ Uma API encurtadora de URLs construída com o framework [NestJS](https://github.
 - **Análises**: Rastreie a contagem de cliques para cada URL encurtada
 - **Persistência de Dados**: PostgreSQL para armazenamento confiável de dados
 - **Suporte Docker**: Implantação fácil com Docker e Docker Compose
+- **Documentação Swagger**: Documentação interativa da API
 - **Testes**: Testes unitários e e2e com alta cobertura
 
 ## Pré-requisitos
@@ -67,6 +68,8 @@ docker-compose up
 
 A API estará disponível em `http://localhost:3000`
 
+A documentação Swagger estará disponível em `http://localhost:3000/api`
+
 ### Opção 2: Desenvolvimento Local
 
 #### Linux/macOS
@@ -85,8 +88,9 @@ npm run start
 
 # modo watch (reinicia automaticamente)
 npm run start:dev
-
 ```
+
+A documentação Swagger estará disponível em `http://localhost:3000/api`
 
 #### Windows
 
