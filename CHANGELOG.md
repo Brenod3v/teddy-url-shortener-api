@@ -1,5 +1,22 @@
 ## [v0.0.2] - 2025-11-10
 
+## [v0.1.0] - 2025-11-11
+
+### Added
+-  Merge pull request #14 from Brenod3v/develop
+-  add observability to the controllers with structured logging using winston
+-  add observability to the services with structured logging using winston
+-  return 302 status code in redirect
+-  add withDeleted: false logic to redirect feature
+-  add timestamps to user entity
+-  implement  updateUrl method
+
+### Fixed
+-  update Actions node version
+-  configure jest-e2e to use commonjs and resolve crypto error
+-  atualiza configuração do jest-e2e para ts-jest v29+
+
+
 ## [v0.0.4] - 2025-11-10
 
 ### Added
